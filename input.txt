@@ -1,0 +1,5 @@
+packages number: 20
+BARCELONA have 2 ship , each ship 10 capacity
+MARSEILLE have 1 ship , each ship 10 capacity
+GENOA have 1 ship , each ship 20 capacity
+NAPLES have 1 ship , each ship 10 capacity
