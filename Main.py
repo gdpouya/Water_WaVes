@@ -4,7 +4,7 @@ import sys
 cities=[]
 timer=0
 cities_name=["BARCELONA","MARSEILLE","GENOA","NAPLES","MESSINA"]
-
+ended = False
 class Central_control():
     def __init__(self):
         # Initialize a semaphore to control access to shared resources
@@ -18,7 +18,7 @@ class Central_control():
         dis_city=cities[ship.get_dis()]
         # Check if there is enough space available at the destination city to store the packages on the ship
         if(dis_city.boat_num() > 0):
-            txt="Permission granted for Ship "+ship.get_ship_id()+" to sail, Time: "+str(timer)
+            txt="Permission granted for Ship "+ship.get_ship_id()+" to sail, Time: "+str(timer)+'\n'
             print(txt)
             self.control_semaphore.release()
             ship.go()
@@ -45,8 +45,11 @@ class Central_control():
             for i in range(0,4):
                 self.end_program=self.end_program or not cities[i].end()
         else:
+            ended = True
+            for city in cities:
+                city.wake_up(ended)
             print("end the program")
-            sys.exit()
+            sys.exit(0)
 
 cc=Central_control()
 class Ship(threading.Thread):
@@ -67,12 +70,16 @@ class Ship(threading.Thread):
         self.working=threading.Semaphore(0)
         # Set the flag indicating whether the ship is idle or not
         self.work=True
+        # end 
+        self.end=False
     def run(self):
         # Run an infinite loop in which the ship waits until it has enough packages to make a trip
         while(True):
+            if(self.end):
+                break
             if(self.city_num < 4 and self.city.boat_fill()):
                 # If there are enough packages, ask permission from the central control object to sail to its next destination
-                txt=str(self.ship_id)+" is home and asking for permission from "+cities_name[self.city_num]+" to "+cities_name[self.city_num+1]+" , Time: "+str(timer)
+                txt=str(self.ship_id)+" is home and asking for permission from "+cities_name[self.city_num]+" to "+cities_name[self.city_num+1]+" , Time: "+str(timer)+'\n'
                 print(txt)
                 cc.request_sent(self)
             else:
@@ -87,7 +94,7 @@ class Ship(threading.Thread):
          # Update the status of the ship to moving
         self.moving=True
          # Sail to the next city
-        txt=str(self.ship_id)+" is sailing with "+str(self.minimum)+" packages to "+cities_name[self.city_num+1]+" , Time: "+str(timer)
+        txt=str(self.ship_id)+" is sailing with "+str(self.minimum)+" packages to "+cities_name[self.city_num+1]+" , Time: "+str(timer)+'\n'
         print(txt)
         cities[self.city_num].boat(-1)
         time.sleep(5)
@@ -104,7 +111,8 @@ class Ship(threading.Thread):
         return self.ship_id
     def is_working(self):
         return self.work
-    def s(self):
+    def s(self,end):
+        self.end=end
         # Set the work flag to true and release the semaphore to signal that the ship is working
         self.work=True
         self.working.release()
@@ -142,10 +150,7 @@ class City():
         if(self.storage < self.ship_storage):
                 self.end_task=True
         else:
-            # Wake up any ships that are idle and send them out again
-            for ship in self.ships:
-                if(~ship.is_working()):
-                    ship.s()
+            self.wake_up(False)
     def end(self):
         return self.end_task
     def boat_num(self):
@@ -158,7 +163,7 @@ class City():
         self.change_storeage_sf.release()
         for ship in self.ships:
             if(not ship.is_moving() and not ship.is_working()):
-                ship.s()
+                ship.s(False)
     def boat_fill(self):
         # Check if a ship can sail from the city based on whether it has enough packages to fill the ship or not
         self.change_storeage_sf.acquire()
@@ -178,5 +183,11 @@ class City():
         self.boat_arrive.release()
     def get_name(self):
         return self.city_name
+    def wake_up(self,end):
+        # Wake up any ships that are idle and send them out again
+            for ship in self.ships:
+                if(~ship.is_working()):
+                    ship.s(end)
+        
 if __name__ == '__main__':
     cc.start()
