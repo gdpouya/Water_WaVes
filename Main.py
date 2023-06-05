@@ -1,5 +1,6 @@
 import threading
 import time
+import sys
 cities=[]
 timer=0
 cities_name=["BARCELONA","MARSEILLE","GENOA","NAPLES","MESSINA"]
@@ -7,6 +8,7 @@ cities_name=["BARCELONA","MARSEILLE","GENOA","NAPLES","MESSINA"]
 class Central_control():
     def __init__(self):
         self.control_semaphore=threading.Semaphore(1)
+        self.end_program=True
     def request_sent(self,ship):
         self.control_semaphore.acquire()
         dis_city=cities[ship.get_dis()]
@@ -27,13 +29,15 @@ class Central_control():
         for city in cities:
             city.start()
     def check_end(self):
-        end_program=True
-        if(end_program):
-            for city in cities:
-                end_program=end_program and city.end()
+        #print("try to end ")
+        if(self.end_program):
+            self.end_program=False
+            for i in range(0,4):
+                #print(str(cities[i].get_name())+" end is "+str(cities[i].end()))
+                self.end_program=self.end_program or not cities[i].end()
         else:
             print("end the program")
-                    
+            sys.exit()
 
 cc=Central_control()
 class Ship(threading.Thread):
@@ -54,7 +58,7 @@ class Ship(threading.Thread):
                 cc.request_sent(self)
             else:
                 self.work=False
-                print(str(self.ship_id)+" is sleeped")
+                #print(str(self.ship_id)+" is sleeped")
                 cc.check_end()
                 self.working.acquire()
             
@@ -76,7 +80,7 @@ class Ship(threading.Thread):
     def is_working(self):
         return self.work
     def s(self):
-        print(str(self.ship_id)+" is waked up")
+        #print(str(self.ship_id)+" is waked up")
         self.work=True
         self.working.release()
         
@@ -142,7 +146,7 @@ class City():
     def joins(self):
         for ship in self.ships:
             ship.join()
-        
-
+    def get_name(self):
+        return self.city_name
 if __name__ == '__main__':
     cc.start()
