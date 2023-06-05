@@ -17,7 +17,12 @@ python water_waves.py
 The program reads input from a file called "input.txt" located in the same directory as the Python file. The format of the input file is:
 
 ```
-<departure_city> <destination_city> <number_of_packages>
+packages number: {pakage number}
+BARCELONA have {number_of_ships} ship , each ship {ship_capacity} capacity
+MARSEILLE have {number_of_ships} ship , each ship {ship_capacity} capacity
+GENOA have {number_of_ships} ship , each ship {ship_capacity} capacity
+NAPLES have {number_of_ships} ship , each ship {ship_capacity} capacity
+
 ```
 
 The departure and destination cities should be one of the following: "BARCELONA", "MARSEILLE", "GENOA", "NAPLES", or "MESSINA". The number of packages should be an integer.
