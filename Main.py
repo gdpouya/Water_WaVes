@@ -1,10 +1,18 @@
 import threading
 import time
 import sys
+
 cities=[]
-timer=0
+timer=0 
+working=True
 cities_name=["BARCELONA","MARSEILLE","GENOA","NAPLES","MESSINA"]
-ended = False
+
+def timer_handeling():
+    global timer
+    while(working):
+        timer+=1
+        time.sleep(1)
+    
 class Central_control():
     def __init__(self):
         # Initialize a semaphore to control access to shared resources
@@ -38,6 +46,8 @@ class Central_control():
             cities[0].add_box(package_number)
         for city in cities:
             city.start()
+        timer_theread=threading.Thread(target=timer_handeling())
+        timer_theread.start()
     def check_end(self):
         # Check if all the required packages have been transported to their destinations
         if(self.end_program):
@@ -46,9 +56,11 @@ class Central_control():
                 self.end_program=self.end_program or not cities[i].end()
         else:
             ended = True
+            print("end the program time: "+str(timer))
             for city in cities:
                 city.wake_up(ended)
-            print("end the program")
+            global working
+            working=False
             sys.exit(0)
 
 cc=Central_control()
@@ -99,6 +111,8 @@ class Ship(threading.Thread):
         cities[self.city_num].boat(-1)
         time.sleep(5)
         cities[self.city_num+1].add_box(self.minimum)
+        txt=str(self.ship_id)+" arrived at "+cities_name[self.city_num+1]+" and now going back Time: "+str(timer)+'\n'
+        print(txt)
         time.sleep(3)
         cities[self.city_num].boat(1)
         # Update the status of the ship to not moving
@@ -191,3 +205,4 @@ class City():
         
 if __name__ == '__main__':
     cc.start()
+    
