@@ -3,15 +3,13 @@ import time
 import sys
 
 cities=[]
-timer=0 
+timer=time.time()
 working=True
 cities_name=["BARCELONA","MARSEILLE","GENOA","NAPLES","MESSINA"]
 
 def timer_handeling():
-    global timer
-    while(working):
-        timer+=1
-        time.sleep(1)
+    return int(time.time()-timer)
+    
     
 class Central_control():
     def __init__(self):
@@ -26,7 +24,7 @@ class Central_control():
         dis_city=cities[ship.get_dis()]
         # Check if there is enough space available at the destination city to store the packages on the ship
         if(dis_city.boat_num() > 0):
-            txt="Permission granted for Ship "+ship.get_ship_id()+" to sail, Time: "+str(timer)
+            txt="Permission granted for Ship "+ship.get_ship_id()+" to sail, Time: "+str(timer_handeling())
             print(txt)
             self.control_semaphore.release()
             ship.go()
@@ -46,8 +44,6 @@ class Central_control():
             cities[0].add_box(package_number)
         for city in cities:
             city.start()
-        timer_theread=threading.Thread(target=timer_handeling())
-        timer_theread.start()
     def check_end(self):
         # Check if all the required packages have been transported to their destinations
         if(self.end_program):
@@ -60,7 +56,7 @@ class Central_control():
                 city.wake_up(ended)
             global working
             working=False
-            print("end the program time: "+str(timer))
+            print("end the program time: "+str(timer_handeling()))
             sys.exit(0)
 
 cc=Central_control()
@@ -91,7 +87,7 @@ class Ship(threading.Thread):
                 break
             if(self.city_num < 4 and self.city.boat_fill()):
                 # If there are enough packages, ask permission from the central control object to sail to its next destination
-                txt=str(self.ship_id)+" is home and asking for permission from "+cities_name[self.city_num]+" to "+cities_name[self.city_num+1]+" , Time: "+str(timer)
+                txt=str(self.ship_id)+" is home and asking for permission from "+cities_name[self.city_num]+" to "+cities_name[self.city_num+1]+" , Time: "+str(timer_handeling())
                 print(txt)
                 cc.request_sent(self)
             else:
@@ -106,12 +102,12 @@ class Ship(threading.Thread):
          # Update the status of the ship to moving
         self.moving=True
          # Sail to the next city
-        txt=str(self.ship_id)+" is sailing with "+str(self.minimum)+" packages to "+cities_name[self.city_num+1]+" , Time: "+str(timer)
+        txt=str(self.ship_id)+" is sailing with "+str(self.minimum)+" packages to "+cities_name[self.city_num+1]+" , Time: "+str(timer_handeling())
         print(txt)
         cities[self.city_num].boat(-1)
         time.sleep(5)
         cities[self.city_num+1].add_box(self.minimum)
-        txt=str(self.ship_id)+" arrived at "+cities_name[self.city_num+1]+" and now going back Time: "+str(timer)
+        txt=str(self.ship_id)+" arrived at "+cities_name[self.city_num+1]+" and now going back Time: "+str(timer_handeling())
         print(txt)
         time.sleep(3)
         cities[self.city_num].boat(1)
